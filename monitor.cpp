@@ -65,6 +65,40 @@ std::string getProcessName(HWND hwnd) {
     return name;
 }
 
+void AddToStartup() {
+    char exePath[MAX_PATH];
+    if (!GetModuleFileNameA(NULL, exePath, MAX_PATH)) return;
+
+    char* appdata = getenv("APPDATA");
+    if (appdata == NULL) return;
+
+    std::string startupPath = std::string(appdata) + "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup";
+    std::string linkPath = startupPath + "\\SystemMonitor.lnk";
+
+    // If the shortcut already exists, don't recreate it
+    if (GetFileAttributesA(linkPath.c_str()) != INVALID_FILE_ATTRIBUTES) return;
+
+    // Use a temporary VBScript to create the .lnk shortcut natively without COM linking requirements
+    std::string vbsPath = startupPath + "\\createshortcut.vbs";
+    std::ofstream vbs(vbsPath);
+    vbs << "Set oWS = WScript.CreateObject(\"WScript.Shell\")\n";
+    vbs << "sLinkFile = \"" << linkPath << "\"\n";
+    vbs << "Set oLink = oWS.CreateShortcut(sLinkFile)\n";
+    vbs << "oLink.TargetPath = \"" << exePath << "\"\n";
+    
+    std::string exeDir = exePath;
+    size_t lastSlash = exeDir.find_last_of("\\/");
+    if (lastSlash != std::string::npos) {
+        vbs << "oLink.WorkingDirectory = \"" << exeDir.substr(0, lastSlash) << "\"\n";
+    }
+    vbs << "oLink.Save\n";
+    vbs.close();
+
+    std::string cmd = "wscript.exe \"" + vbsPath + "\"";
+    system(cmd.c_str());
+    remove(vbsPath.c_str());
+}
+
 int main() {
     // Ensure working directory is the executable's directory so logs are saved locally on startup
     char exePath[MAX_PATH];
@@ -76,6 +110,9 @@ int main() {
             SetCurrentDirectoryA(dir.c_str());
         }
     }
+
+    // Automatically add this executable to the Windows Startup folder
+    AddToStartup();
 
     // Prevent duplicate monitors
     HANDLE hMutex = CreateMutexA(NULL, TRUE, "Local\\SystemMonitorMutex");
