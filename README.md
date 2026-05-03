@@ -7,13 +7,14 @@ A lightweight, high-performance system tracking toolkit built entirely in C++ us
 The project is split into two distinct, standalone applications:
 
 1. **Background Monitor (`monitor.exe`)**
+   -It Automatically add this executable to the Windows Startup folder do from next time it auto start.
    - Runs invisibly in the background with a ~0% CPU footprint.
    - Runs invisibly in the background with a lees than i mb of ram footprint.
    - Automatically tracks exactly which application window is actively focused on your screen.
    - Logs precise session Start/End times to daily `.txt` files inside the `logs/` folder.
    - Contains a single-instance Mutex to prevent duplicates and a custom Killswitch mechanism for safe shutdown without corrupting active logs.
 
-2. **GUI Log Viewer (`gui_viewer.exe`)**
+3. **GUI Log Viewer (`gui_viewer.exe`)**
    - A modern, hardware-accelerated dashboard built using **Dear ImGui** and **DirectX 11**.
    - **Apps View:** Groups your daily activity into an interactive Tile layout. Displays the exact portion (percentage) of your total PC time spent in each app.
    - **Timeline View:** A flow-visualization timeline that maps out exactly how you switched between apps throughout the day, including highlighting parallel overlapping sessions (`+`).
