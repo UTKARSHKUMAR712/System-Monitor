@@ -1,9 +1,11 @@
 #include "gui.h"
 #include "imgui/imgui.h"
 #include <algorithm>
+#include "startup_util.h"
 
 GUI::GUI() {
     availableDates = LogParser::GetAvailableDates("logs");
+    autoStartEnabled = IsAutoStartEnabled();
 }
 
 void GUI::RefreshLogs() {
@@ -78,6 +80,28 @@ void GUI::Render() {
     
     if (ImGui::Checkbox("Hide micro sessions (< 3 seconds)", &hideMicroSessions)) {
         needsRefresh = true;
+    }
+    
+    if (ImGui::Checkbox("Run Monitor on System Boot", &autoStartEnabled)) {
+        if (autoStartEnabled) {
+            std::string exe = GetMonitorExePath();
+            if (exe.empty()) {
+                monitorNotFound = true;
+                autoStartEnabled = false;
+            } else {
+                monitorNotFound = false;
+                SetAutoStart(true);
+                autoStartEnabled = IsAutoStartEnabled(); // verify state
+            }
+        } else {
+            monitorNotFound = false;
+            SetAutoStart(false);
+            autoStartEnabled = IsAutoStartEnabled();
+        }
+    }
+    
+    if (monitorNotFound) {
+        ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "Error: monitor.exe not found in current or parent folder.");
     }
     
     ImGui::Checkbox("View as Tiles (Apps View)", &tileView);

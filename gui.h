@@ -29,4 +29,6 @@ private:
     std::vector<TimelineEvent> timelineEvents;
     int totalDayUsageSec = 0;
     bool needsRefresh = true;
+    bool autoStartEnabled = false;
+    bool monitorNotFound = false;
 };

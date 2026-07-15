@@ -28,7 +28,7 @@ Because this project uses the native Windows API and DirectX 11, it is designed 
 
 ### 1. Compiling the Monitor
 ```bash
-g++ monitor.cpp -O2 -s -static -mwindows -o monitor.exe
+g++ monitor.cpp -O2 -s -static -mwindows -o monitor.exe -lole32 -luuid
 ```
 *(Note: The `-mwindows` flag ensures the tracker detaches from the terminal and runs completely invisibly in the background).*
 
@@ -44,7 +44,7 @@ git clone https://github.com/ocornut/imgui.git
 **Step B: Compile the Viewer**  
 Run this command to compile all the custom viewer code alongside the ImGui DirectX 11 backend:
 ```bash
-g++ main.cpp gui.cpp log_parser.cpp imgui/*.cpp imgui/backends/imgui_impl_win32.cpp imgui/backends/imgui_impl_dx11.cpp -I imgui -I . -ld3d11 -ld3dcompiler -lgdi32 -ldwmapi -O2 -static -std=c++17 -mwindows -o gui_viewer.exe
+g++ main.cpp gui.cpp log_parser.cpp imgui/*.cpp imgui/backends/imgui_impl_win32.cpp imgui/backends/imgui_impl_dx11.cpp -I imgui -I . -ld3d11 -ld3dcompiler -lgdi32 -ldwmapi -lole32 -luuid -O2 -static -std=c++17 -mwindows -o gui_viewer.exe
 ```
 
 ---
