@@ -40,7 +40,38 @@ inline std::string GetMonitorExePath() {
 inline bool IsAutoStartEnabled() {
     std::string linkPath = GetStartupLinkPath();
     if (linkPath.empty()) return false;
-    return GetFileAttributesA(linkPath.c_str()) != INVALID_FILE_ATTRIBUTES;
+    if (GetFileAttributesA(linkPath.c_str()) == INVALID_FILE_ATTRIBUTES) return false;
+    
+    bool matches = false;
+    HRESULT hres = CoInitialize(NULL);
+    if (SUCCEEDED(hres)) {
+        IShellLinkA* psl;
+        hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkA, (LPVOID*)&psl);
+        if (SUCCEEDED(hres)) {
+            IPersistFile* ppf;
+            hres = psl->QueryInterface(IID_IPersistFile, (LPVOID*)&ppf);
+            if (SUCCEEDED(hres)) {
+                int wchars_num = MultiByteToWideChar(CP_UTF8, 0, linkPath.c_str(), -1, NULL, 0);
+                wchar_t* wstr = new wchar_t[wchars_num];
+                MultiByteToWideChar(CP_UTF8, 0, linkPath.c_str(), -1, wstr, wchars_num);
+                
+                if (SUCCEEDED(ppf->Load(wstr, STGM_READ))) {
+                    char targetPath[MAX_PATH];
+                    if (SUCCEEDED(psl->GetPath(targetPath, MAX_PATH, NULL, SLGP_UNCPRIORITY))) {
+                        std::string expectedPath = GetMonitorExePath();
+                        if (_stricmp(targetPath, expectedPath.c_str()) == 0) {
+                            matches = true;
+                        }
+                    }
+                }
+                delete[] wstr;
+                ppf->Release();
+            }
+            psl->Release();
+        }
+        CoUninitialize();
+    }
+    return matches;
 }
 
 inline bool IsAutoStartDisabledByUser() {
@@ -53,6 +84,7 @@ inline void SetAutoStart(bool enable) {
 
     if (enable) {
         remove("disable_autostart.txt");
+        remove(linkPath.c_str()); // Remove old shortcut to prevent write conflicts
         
         std::string exePath = GetMonitorExePath();
         if (exePath.empty()) return;
